@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.AI;
+using Unity.Burst.CompilerServices;
 
 [RequireComponent(typeof(NavMeshAgent))]
 public class PlayerController : MonoBehaviour
@@ -11,6 +12,9 @@ public class PlayerController : MonoBehaviour
     Camera cam;
     PlayerMotor motor;
 
+    //--------
+    public GameObject enemyHealthBar;
+    //-------
     void Start()
     {
         cam = Camera.main;
@@ -20,16 +24,17 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (EventSystem.current.IsPointerOverGameObject()){
+        if (EventSystem.current.IsPointerOverGameObject())
+        {
             return;
         }
 
         if (Input.GetMouseButtonDown(0))
         {
-            Ray ray = cam.ScreenPointToRay(Input.mousePosition);    
+            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
 
-            if(Physics.Raycast(ray, out hit, 100, movementMask))
+            if (Physics.Raycast(ray, out hit, 100, movementMask))
             {
                 //Debug.Log("We hit " + hit.collider.name + " " + hit.point);
                 motor.MoveToPoint(hit.point);
@@ -44,38 +49,44 @@ public class PlayerController : MonoBehaviour
 
             if (Physics.Raycast(ray, out hit, 100))
             {
+
                 Interactable interactable = hit.collider.GetComponent<Interactable>();
-                if(interactable != null)
+                if (interactable != null)
                 {
                     SetFocus(interactable);
                 }
             }
         }
 
-        /*if (Input.GetKeyDown(KeyCode.I))
-        {
-            Inventory.instance.ShowOrHide();
-        }*/
-    }
-    void SetFocus (Interactable newFocus)
+        enemyCheck();
+
+        //--------------
+      
+        //--------
+            /*if (Input.GetKeyDown(KeyCode.I))
+            {
+                Inventory.instance.ShowOrHide();
+            }*/
+        }
+    void SetFocus(Interactable newFocus)
     {
         if (newFocus != focus)
         {
-            if (focus!= null)
+            if (focus != null)
             {
                 focus.OnDeFocused();
-            }   
+            }
 
-            focus = newFocus; 
-            motor.FollowTarget(newFocus);           
+            focus = newFocus;
+            motor.FollowTarget(newFocus);
         }
 
         newFocus.OnFocused(transform);
     }
 
     void RemoveFocus()
-    {   
-        if(focus != null)
+    {
+        if (focus != null)
         {
             focus.OnDeFocused();
         }
@@ -83,4 +94,32 @@ public class PlayerController : MonoBehaviour
         focus = null;
         motor.StopFollowingTarget();
     }
+
+    void enemyCheck()
+    {
+        Ray ray1 = cam.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit1;
+
+        if (Physics.Raycast(ray1, out hit1, 100))
+        {
+            try
+            {
+                if (hit1.collider.gameObject.GetComponent<Enemy>() != null)
+                {
+                   enemyHealthBar.SetActive(true);
+                }
+                else if (hit1.collider.gameObject.GetComponent<Enemy>() == null)
+                {
+                   enemyHealthBar.SetActive(false);
+
+                }
+
+            }
+            catch
+            {
+                enemyHealthBar.SetActive(false);
+            }
+        }
+    }
+
 }
